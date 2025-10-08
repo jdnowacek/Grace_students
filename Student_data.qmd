@@ -10,26 +10,46 @@ library(tidyverse)
 
 # Data 
 ```{r}
-name <- c("Adeshina", "Brendan", "Jayden", "Kylie", "Nora", "Gia", "Aston", "Marshawn", "Jemilah", "Guy", "Alaiya", "Aymir", "Jourdan", "Anhala", "Ameerah", "Michael", "Jallbe", "A’Zyiah", "Amira", "Keiano", "Mylah", "Tristan", "Rhegan", "Ariana", "Aubrelle")
+# name <- 
+#   c("Adeshina", "Brendan", "Jayden", "Kylie", "Nora", "Gia", "Aston", 
+#     "Marshawn", "Jemilah", "Guy", "Alaiya", "Aymir", "Jourdan", "Anhala", 
+#     "Ameerah", "Michael", "Jallbe", "A’Zyiah", "Amira", "Keiano", "Mylah", 
+#     "Tristan", "Rhegan", "Ariana", "Aubrelle")
+# 
+# sex <-
+#   c("M", "M", "M", "F", "F", "F", "M", 
+#     "M", "F", "M", "F", "M", "F", "F", 
+#     "F", "M", "M", "F", "F", "M", "F", 
+#     "M", "F", "F", "F")
+# 
+# domain1assessment <-
+#   c(16, 21, NA, NA, NA, 22, NA, 
+#     12, NA, 17, 21, 23, 12, 19, 
+#     17, 10, 19, 15, 16, 19, 10, 
+#     13, 19, 14, 20)
+# 
+# domain2assessment <-
+#   c(10.5, 23.5, 10, 15.5, NA, 18.5, 20, 
+#     4, 16.5, 15, 19, 17.5, 16, 13.5, 
+#     15.5, 12.5, 19.5, 14.5, 15.5, 15, 12.5, 
+#     NA, 17.5, 16.5, 18.5)
+# 
+# d <- tibble(name = name,
+#             sex = sex,
+#             domain1assessment = domain1assessment,
+#             domain2assessment = domain2assessment)
+# 
+# excel <- write.csv(d, "d.csv")
+```
 
-sex <- 
-  c("M", "M", "M", "F", "F", "F", "M", "M", "F", "M", "F", "M", "F", "F", "F", "M", "M", "F", "F", "M", "F", "M", "F", "F", "F")
+```{r}
+d <- read.csv("d.csv")
 
-domain1assessment <- 
-  c(16, 21, NA, NA, NA, 22, NA, 12, NA, 17, 21, 23, 12, 19, 17, 10, 19, 15, 16, 19, 10, 13, 19, 14, 20)
-
-domain2assessment <- 
-  c(10.5, 23.5, 10, 15.5, NA, 18.5, 20, 4, 16.5, 15, 19, 17.5, 16, 13.5, 15.5, 12.5, 19.5, 14.5, 15.5, 15, 12.5, NA, 17.5, 16.5, 18.5)
-
-d <- tibble(name = name, 
-            sex = sex, 
-            domain1assessment = domain1assessment,
-            domain2assessment = domain2assessment)
-
-d <- d |>
+d_long <- d |>
   pivot_longer(cols = starts_with("domain"),
                names_to = "score")
 ```
+
 
 
 # Visualizations
