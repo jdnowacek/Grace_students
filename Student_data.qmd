@@ -4,7 +4,7 @@ format: html
 ---
 
 # Packages
-```{r}
+```{r, message=FALSE}
 library(tidyverse)
 ```
 
@@ -45,24 +45,61 @@ library(tidyverse)
 ```{r}
 d <- read.csv("d.csv")
 
-d_long <- d |>
+d <- d |>
+  mutate(perc_d1 = domain1assessment/26,
+         perc_d2 = domain2assessment/27,
+         perc_d3 = domain3assessment/27)
+
+d_long_scores <- d |>
   pivot_longer(cols = starts_with("domain"),
                names_to = "score")
+
+d_long_perc <- d |>
+  pivot_longer(cols = starts_with("perc"),
+               names_to = "percentage")
+
+
 ```
-
-
 
 # Visualizations
 ```{r}
-d |>
-  group_by(name) |>
-  mutate(color_flag = ifelse(value[2] > value[1], "darkgreen", "red"),
-         order = row_number()) |>
-  ungroup() |>
-  ggplot(aes(x = value, y = name, group = name, color = color_flag)) +
-  geom_line() +
-  geom_text(aes(label = order), size = 3) +
+d_long_perc |>
+  ggplot(aes(y = name, x = value, color = percentage)) +
+  geom_point() +
+  theme_bw()
+```
+
+```{r}
+d_plot <- d |>
+  mutate(diff23 = perc_d3 - perc_d2) |>
+  arrange(name, by = reading_group)
+
+d_plot |>
+  ggplot(aes(x = diff23, y = name, color = reading_group)) +
+  geom_point(size = 3) +
+  scale_x_continuous(breaks = seq(-0.2, 0.4, 0.05)) +
   scale_color_identity() +
   theme_bw()
 ```
+
+```{r}
+d_plot |>
+  ggplot(aes(x = diff23, fill = reading_group)) +
+  geom_density() +
+  facet_wrap(~ reading_group) +
+  scale_fill_identity() +
+  theme_bw()
+```
+
+```{r}
+d |>
+  mutate(diff23 = perc_d3 / perc_d2) |>
+  ggplot(aes(x = diff23)) +
+           geom_histogram(binwidth = 0.1) +
+           theme_bw()
+```
+
+
+
+
 
