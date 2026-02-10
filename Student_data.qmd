@@ -6,98 +6,137 @@ format: html
 # Packages
 ```{r, message=FALSE}
 library(tidyverse)
+library(gridExtra)
 ```
 
 # Data 
-```{r}
-# name <- 
-#   c("Adeshina", "Brendan", "Jayden", "Kylie", "Nora", "Gia", "Aston", 
-#     "Marshawn", "Jemilah", "Guy", "Alaiya", "Aymir", "Jourdan", "Anhala", 
-#     "Ameerah", "Michael", "Jallbe", "A’Zyiah", "Amira", "Keiano", "Mylah", 
-#     "Tristan", "Rhegan", "Ariana", "Aubrelle")
-# 
-# sex <-
-#   c("M", "M", "M", "F", "F", "F", "M", 
-#     "M", "F", "M", "F", "M", "F", "F", 
-#     "F", "M", "M", "F", "F", "M", "F", 
-#     "M", "F", "F", "F")
-# 
-# domain1assessment <-
-#   c(16, 21, NA, NA, NA, 22, NA, 
-#     12, NA, 17, 21, 23, 12, 19, 
-#     17, 10, 19, 15, 16, 19, 10, 
-#     13, 19, 14, 20)
-# 
-# domain2assessment <-
-#   c(10.5, 23.5, 10, 15.5, NA, 18.5, 20, 
-#     4, 16.5, 15, 19, 17.5, 16, 13.5, 
-#     15.5, 12.5, 19.5, 14.5, 15.5, 15, 12.5, 
-#     NA, 17.5, 16.5, 18.5)
-# 
-# d <- tibble(name = name,
-#             sex = sex,
-#             domain1assessment = domain1assessment,
-#             domain2assessment = domain2assessment)
-# 
-# excel <- write.csv(d, "d.csv")
-```
 
 ```{r}
 d <- read.csv("d.csv")
 
 d <- d |>
-  mutate(perc_d1 = domain1assessment/26,
-         perc_d2 = domain2assessment/27,
-         perc_d3 = domain3assessment/27)
+  mutate(perc_1assessment = domain_1assessment/26,
+         perc_2assessment = domain_2assessment/27,
+         perc_3assessment = domain_3assessment/27,
+         perc_4assessment = domain_4assessment/27,
+         perc_5assessment = domain_5assessment/26)
 
-d_long_scores <- d |>
-  pivot_longer(cols = starts_with("domain"),
-               names_to = "score")
+d_long <- d |>
+  pivot_longer(
+    cols = starts_with(c("domain", "perc")),
+    names_to = c(".value", "d"),
+    names_sep = "_" # Or use names_pattern if there is no separator
+  )
 
-d_long_perc <- d |>
-  pivot_longer(cols = starts_with("perc"),
-               names_to = "percentage")
-
-
+d_long <- d_long |>
+  group_by(name) |>
+  mutate(d = seq(1, 5, 1)) |>
+  rename(score = domain,
+         domain = d) |>
+  ungroup()
 ```
 
 # Visualizations
+
 ```{r}
-d_long_perc |>
-  ggplot(aes(y = name, x = value, color = percentage)) +
+wcavg <- d_long |>
+  summarise(d1_score_mean = mean(score[d == 1], na.rm = TRUE),
+            d2_score_mean = mean(score[d == 2], na.rm = TRUE),
+            d3_score_mean = mean(score[d == 3], na.rm = TRUE),
+            d4_score_mean = mean(score[d == 4], na.rm = TRUE),
+            d5_score_mean = mean(score[d == 5], na.rm = TRUE)) |>
+  as.matrix()
+
+wcavg_perc <- d_long |>
+  summarise(d1_perc_mean = mean(perc[d == 1], na.rm = TRUE),
+            d2_perc_mean = mean(perc[d == 2], na.rm = TRUE),
+            d3_perc_mean = mean(perc[d == 3], na.rm = TRUE),
+            d4_perc_mean = mean(perc[d == 4], na.rm = TRUE),
+            d5_perc_mean = mean(perc[d == 5], na.rm = TRUE)) |>
+  as.matrix()
+
+avgs <- data.frame(
+  domain = seq(1, 5, 1),
+  avg_score = wcavg[1,],
+  avg_perc = wcavg_perc[1,]
+)
+
+avgs |>
+  ggplot(aes(x = domain, y = avg_score)) +
   geom_point() +
-  theme_bw()
+  geom_line() +
+  theme_bw() +
+  labs(x = "Domain", y = "Average Score")
+
+avgs |>
+  ggplot(aes(x = domain, y = avg_perc)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  labs(x = "Domain", y = "Average Percentage")
 ```
+
 
 ```{r}
-d_plot <- d |>
-  mutate(diff23 = perc_d3 - perc_d2) |>
-  arrange(name, by = reading_group)
+p1 <- d_long |>
+  filter(reading_group_eval == "red") |>
+  ggplot(aes(x = d,
+             y = perc,
+             group = name, 
+             color = name)) +
+  geom_point() +
+  geom_line() +
+  # Use viridis for high-contrast, colorblind-friendly palettes
+  scale_color_viridis_d(option = "turbo") + 
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(x = "Domain", y = "Percentage")
 
-d_plot |>
-  ggplot(aes(x = diff23, y = name, color = reading_group)) +
-  geom_point(size = 3) +
-  scale_x_continuous(breaks = seq(-0.2, 0.4, 0.05)) +
-  scale_color_identity() +
-  theme_bw()
+p2 <- d_long |>
+  filter(reading_group_eval == "orange") |>
+  ggplot(aes(x = d,
+             y = perc,
+             group = name, 
+             color = name)) +
+  geom_point() +
+  geom_line() +
+  # Use viridis for high-contrast, colorblind-friendly palettes
+  scale_color_viridis_d(option = "turbo") + 
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(x = "Domain", y = "Percentage")
+
+p3 <- d_long |>
+  filter(reading_group_eval == "green") |>
+  ggplot(aes(x = d,
+             y = perc,
+             group = name, 
+             color = name)) +
+  geom_point() +
+  geom_line() +
+  # Use viridis for high-contrast, colorblind-friendly palettes
+  scale_color_viridis_d(option = "turbo") + 
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(x = "Domain", y = "Percentage")
+
+p4 <- d_long |>
+  filter(reading_group_eval == "blue") |>
+  ggplot(aes(x = d,
+             y = perc,
+             group = name, 
+             color = name)) +
+  geom_point() +
+  geom_line() +
+  # Use viridis for high-contrast, colorblind-friendly palettes
+  scale_color_viridis_d(option = "turbo") + 
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(x = "Domain", y = "Percentage")
+
+grid.arrange(p1, p2, p3, p4, nrow = 2)
 ```
 
-```{r}
-d_plot |>
-  ggplot(aes(x = diff23, fill = reading_group)) +
-  geom_density() +
-  facet_wrap(~ reading_group) +
-  scale_fill_identity() +
-  theme_bw()
-```
-
-```{r}
-d |>
-  mutate(diff23 = perc_d3 / perc_d2) |>
-  ggplot(aes(x = diff23)) +
-           geom_histogram(binwidth = 0.1) +
-           theme_bw()
-```
 
 
 
